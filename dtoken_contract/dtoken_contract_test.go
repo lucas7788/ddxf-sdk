@@ -5,12 +5,13 @@ import (
 
 	"encoding/hex"
 	"fmt"
-	"github.com/ont-bizsuite/ddxf-sdk/base_contract"
-	"github.com/ontio/ontology-go-sdk"
-	"github.com/ontio/ontology/common"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"time"
+
+	"github.com/ont-bizsuite/ddxf-sdk/base_contract"
+	ontology_go_sdk "github.com/ontio/ontology-go-sdk"
+	"github.com/ontio/ontology/common"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -67,7 +68,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestDTokenKit_GetDDXFContractAddr(t *testing.T) {
-	addr, err := dTokenKit.GetMpContractAddr()
+	addr, err := dTokenKit.GetMpContractAddr(common.ADDRESS_EMPTY)
 	assert.Nil(t, err)
 	fmt.Println("addr: ", addr.ToHexString())
 }
@@ -75,7 +76,7 @@ func TestDTokenKit_GetDDXFContractAddr(t *testing.T) {
 //49c2dc97ee58b2292e55499e1122c579fc0690e3
 func TestDTokenKit_SetDDXFContractAddr(t *testing.T) {
 	addr, _ := common.AddressFromHexString("f0020843718912d5f25977ffd8ea7e4eb00601a1")
-	txHash, err := dTokenKit.SetMpContractAddr(admin, addr)
+	txHash, err := dTokenKit.SetMpContractAddr(common.ADDRESS_EMPTY, admin, addr)
 	assert.Nil(t, err)
 
 	time.Sleep(10 * time.Second)

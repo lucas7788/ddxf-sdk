@@ -2,6 +2,7 @@ package dtoken_contract
 
 import (
 	"fmt"
+
 	"github.com/ont-bizsuite/ddxf-sdk/base_contract"
 	"github.com/ont-bizsuite/ddxf-sdk/market_place_contract"
 	"github.com/ontio/ontology-go-sdk"
@@ -25,13 +26,27 @@ func (this *DTokenKit) SetContractAddr(addr common.Address) {
 	this.contractAddress = addr
 }
 
-func (this *DTokenKit) SetMpContractAddr(admin *ontology_go_sdk.Account, addr common.Address) (common.Uint256, error) {
-	return this.bc.Invoke(this.contractAddress, admin, "setMpContract",
+func (this *DTokenKit) SetMpContractAddr(contractAddress common.Address, admin *ontology_go_sdk.Account, addr common.Address) (common.Uint256, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, admin, "setMpContract",
 		[]interface{}{addr})
 }
 
-func (this *DTokenKit) GetMpContractAddr() (common.Address, error) {
-	res, err := this.bc.PreInvoke(this.contractAddress, "getMpContract", []interface{}{})
+func (this *DTokenKit) BuildSetMpContractAddrTx(contractAddress common.Address, mpContractAddress common.Address) (*types.MutableTransaction, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "setMpContract", []interface{}{mpContractAddress})
+
+}
+
+func (this *DTokenKit) GetMpContractAddr(contractAddress common.Address) (common.Address, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	res, err := this.bc.PreInvoke(contractAddress, "getMpContract", []interface{}{})
 	if err != nil {
 		return common.ADDRESS_EMPTY, err
 	}
@@ -47,15 +62,21 @@ func (this *DTokenKit) GetMpContractAddr() (common.Address, error) {
 	return addr, nil
 }
 
-func (this *DTokenKit) CreateTokenTemplate(creator *ontology_go_sdk.Account,
+func (this *DTokenKit) CreateTokenTemplate(contractAddress common.Address, creator *ontology_go_sdk.Account,
 	tt market_place_contract.TokenTemplate) (common.Uint256, error) {
 	sink := common.NewZeroCopySink(nil)
 	tt.Serialize(sink)
-	return this.bc.Invoke(this.contractAddress, creator, "createTokenTemplate", []interface{}{creator.Address, sink.Bytes()})
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, creator, "createTokenTemplate", []interface{}{creator.Address, sink.Bytes()})
 }
 
-func (this *DTokenKit) GetTokenTemplateById(tokenTemplateId []byte) (tt *market_place_contract.TokenTemplate, err error) {
-	res, err := this.bc.PreInvoke(this.contractAddress, "getTokenTemplateById", []interface{}{tokenTemplateId})
+func (this *DTokenKit) GetTokenTemplateById(contractAddress common.Address, tokenTemplateId []byte) (tt *market_place_contract.TokenTemplate, err error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	res, err := this.bc.PreInvoke(contractAddress, "getTokenTemplateById", []interface{}{tokenTemplateId})
 	if err != nil {
 		return
 	}
@@ -76,44 +97,65 @@ func (this *DTokenKit) GetTokenTemplateById(tokenTemplateId []byte) (tt *market_
 	return
 }
 
-func (this *DTokenKit) BuildCreateTokenTemplateTx(creator common.Address,
+func (this *DTokenKit) BuildCreateTokenTemplateTx(contractAddress common.Address, creator common.Address,
 	tt market_place_contract.TokenTemplate) (*types.MutableTransaction, error) {
 	sink := common.NewZeroCopySink(nil)
 	tt.Serialize(sink)
-	return this.bc.BuildTx(this.contractAddress, "createTokenTemplate", []interface{}{creator, sink.Bytes()})
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "createTokenTemplate", []interface{}{creator, sink.Bytes()})
 }
 
-func (this *DTokenKit) BuildUpdateTokenTemplateTx(tokenTemplateId []byte,
+func (this *DTokenKit) BuildUpdateTokenTemplateTx(contractAddress common.Address, tokenTemplateId []byte,
 	tt market_place_contract.TokenTemplate) (*types.MutableTransaction, error) {
 	sink := common.NewZeroCopySink(nil)
 	tt.Serialize(sink)
-	return this.bc.BuildTx(this.contractAddress, "updateTokenTemplate", []interface{}{tokenTemplateId, sink.Bytes()})
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "updateTokenTemplate", []interface{}{tokenTemplateId, sink.Bytes()})
 }
 
-func (this *DTokenKit) BuildRemoveTokenTemplateTx(tokenTemplateId []byte) (*types.MutableTransaction, error) {
-	return this.bc.BuildTx(this.contractAddress, "removeTokenTemplate", []interface{}{tokenTemplateId})
+func (this *DTokenKit) BuildRemoveTokenTemplateTx(contractAddress common.Address, tokenTemplateId []byte) (*types.MutableTransaction, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "removeTokenTemplate", []interface{}{tokenTemplateId})
 }
 
-func (this *DTokenKit) AuthorizeTokenTemplate(creator *ontology_go_sdk.Account, tokenTemplateId []byte,
+func (this *DTokenKit) AuthorizeTokenTemplate(contractAddress common.Address, creator *ontology_go_sdk.Account, tokenTemplateId []byte,
 	authorizeAddr []common.Address) (common.Uint256, error) {
-	return this.bc.Invoke(this.contractAddress, creator, "authorizeTokenTemplate",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, creator, "authorizeTokenTemplate",
 		[]interface{}{tokenTemplateId, parseAddressArr(authorizeAddr)})
 }
 
-func (this *DTokenKit) BuildAuthorizeAddrTx(tokenTemplateId []byte,
+func (this *DTokenKit) BuildAuthorizeAddrTx(contractAddress common.Address, tokenTemplateId []byte,
 	authorizeAddr []common.Address) (*types.MutableTransaction, error) {
-	return this.bc.BuildTx(this.contractAddress, "authorizeTokenTemplate",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "authorizeTokenTemplate",
 		[]interface{}{tokenTemplateId, parseAddressArr(authorizeAddr)})
 }
 
-func (this *DTokenKit) BuildRemAuthorizeAddrTx(tokenTemplateId []byte,
+func (this *DTokenKit) BuildRemAuthorizeAddrTx(contractAddress common.Address, tokenTemplateId []byte,
 	authorizeAddr []common.Address) (*types.MutableTransaction, error) {
-	return this.bc.BuildTx(this.contractAddress, "removeAuthorizeAddr",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "removeAuthorizeAddr",
 		[]interface{}{tokenTemplateId, parseAddressArr(authorizeAddr)})
 }
 
-func (this *DTokenKit) GetAuthorizedAddr(tokenTemplateId []byte) ([]common.Address, error) {
-	res, err := this.bc.PreInvoke(this.contractAddress, "getAuthorizedAddr", []interface{}{tokenTemplateId})
+func (this *DTokenKit) GetAuthorizedAddr(contractAddress common.Address, tokenTemplateId []byte) ([]common.Address, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	res, err := this.bc.PreInvoke(contractAddress, "getAuthorizedAddr", []interface{}{tokenTemplateId})
 	if err != nil {
 		return nil, err
 	}
@@ -136,41 +178,62 @@ func (this *DTokenKit) GetAuthorizedAddr(tokenTemplateId []byte) ([]common.Addre
 	return addrs, nil
 }
 
-func (this *DTokenKit) GetTokenIdByTemplateId(templateId []byte) ([]byte, error) {
-	res, err := this.bc.PreInvoke(this.contractAddress, "getTokenIdByTemplateId", []interface{}{templateId})
+func (this *DTokenKit) GetTokenIdByTemplateId(contractAddress common.Address, templateId []byte) ([]byte, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	res, err := this.bc.PreInvoke(contractAddress, "getTokenIdByTemplateId", []interface{}{templateId})
 	if err != nil {
 		return nil, err
 	}
 	return res.ToByteArray()
 }
-func (this *DTokenKit) GetTemplateIdByTokenId(tokenId []byte) ([]byte, error) {
-	res, err := this.bc.PreInvoke(this.contractAddress, "getTemplateIdByTokenId", []interface{}{tokenId})
+func (this *DTokenKit) GetTemplateIdByTokenId(contractAddress common.Address, tokenId []byte) ([]byte, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	res, err := this.bc.PreInvoke(contractAddress, "getTemplateIdByTokenId", []interface{}{tokenId})
 	if err != nil {
 		return nil, err
 	}
 	return res.ToByteArray()
 }
 
-func (this *DTokenKit) GenerateDToken(acc *ontology_go_sdk.Account, tokenTemplateId []byte, n int) (common.Uint256, error) {
-	return this.bc.Invoke(this.contractAddress, acc, "generateDToken", []interface{}{acc.Address, tokenTemplateId, n})
+func (this *DTokenKit) GenerateDToken(contractAddress common.Address, acc *ontology_go_sdk.Account, tokenTemplateId []byte, n int) (common.Uint256, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, acc, "generateDToken", []interface{}{acc.Address, tokenTemplateId, n})
 }
 
-func (this *DTokenKit) BuildGenerateDTokenTx(acc common.Address, tokenTemplateId []byte,
+func (this *DTokenKit) BuildGenerateDTokenTx(contractAddress common.Address, acc common.Address, tokenTemplateId []byte,
 	n int) (*types.MutableTransaction, error) {
-	return this.bc.BuildTx(this.contractAddress, "generateDToken", []interface{}{acc, tokenTemplateId, n})
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "generateDToken", []interface{}{acc, tokenTemplateId, n})
 }
 
-func (this *DTokenKit) GenerateDTokenForOther(acc *ontology_go_sdk.Account, to common.Address, tokenTemplateId []byte, n int) (common.Uint256, error) {
-	return this.bc.Invoke(this.contractAddress, acc, "generateDTokenForOther", []interface{}{acc.Address, to, tokenTemplateId, n})
+func (this *DTokenKit) GenerateDTokenForOther(contractAddress common.Address, acc *ontology_go_sdk.Account, to common.Address, tokenTemplateId []byte, n int) (common.Uint256, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, acc, "generateDTokenForOther", []interface{}{acc.Address, to, tokenTemplateId, n})
 }
 
-func (this *DTokenKit) BuildGenerateDTokenForOtherTx(acc, to common.Address, tokenTemplateId []byte,
+func (this *DTokenKit) BuildGenerateDTokenForOtherTx(contractAddress common.Address, acc, to common.Address, tokenTemplateId []byte,
 	n int) (*types.MutableTransaction, error) {
-	return this.bc.BuildTx(this.contractAddress, "generateDTokenForOther", []interface{}{acc, to, tokenTemplateId, n})
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "generateDTokenForOther", []interface{}{acc, to, tokenTemplateId, n})
 }
 
-func (this *DTokenKit) BalanceOf(addr common.Address, tokenId []byte) (uint64, error) {
-	res, err := this.bc.PreInvoke(this.contractAddress, "balanceOf", []interface{}{addr, tokenId})
+func (this *DTokenKit) BalanceOf(contractAddress common.Address, addr common.Address, tokenId []byte) (uint64, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	res, err := this.bc.PreInvoke(contractAddress, "balanceOf", []interface{}{addr, tokenId})
 	if err != nil {
 		return 0, err
 	}
@@ -181,12 +244,18 @@ func (this *DTokenKit) BalanceOf(addr common.Address, tokenId []byte) (uint64, e
 	return in.Uint64(), nil
 }
 
-func (this *DTokenKit) DeleteToken(acc *ontology_go_sdk.Account, tokenId []byte) (common.Uint256, error) {
-	return this.bc.Invoke(this.contractAddress, acc, "deleteToken", []interface{}{acc.Address, tokenId})
+func (this *DTokenKit) DeleteToken(contractAddress common.Address, acc *ontology_go_sdk.Account, tokenId []byte) (common.Uint256, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, acc, "deleteToken", []interface{}{acc.Address, tokenId})
 }
 
-func (this *DTokenKit) GetAgentBalance(agent common.Address) (uint64, error) {
-	res, err := this.bc.PreInvoke(this.contractAddress, "getAgentBalance", []interface{}{agent})
+func (this *DTokenKit) GetAgentBalance(contractAddress common.Address, agent common.Address) (uint64, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	res, err := this.bc.PreInvoke(contractAddress, "getAgentBalance", []interface{}{agent})
 	if err != nil {
 		return 0, err
 	}
@@ -197,62 +266,86 @@ func (this *DTokenKit) GetAgentBalance(agent common.Address) (uint64, error) {
 	return in.Uint64(), nil
 }
 
-func (this *DTokenKit) UseToken(buyer *ontology_go_sdk.Account,
+func (this *DTokenKit) UseToken(contractAddress common.Address, buyer *ontology_go_sdk.Account,
 	tokenId []byte, n int) (common.Uint256, error) {
-	return this.bc.Invoke(this.contractAddress, buyer, "useToken",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, buyer, "useToken",
 		[]interface{}{buyer.Address, tokenId, n})
 }
 
-func (this *DTokenKit) TransferToken(from, to *ontology_go_sdk.Account,
+func (this *DTokenKit) TransferToken(contractAddress common.Address, from, to *ontology_go_sdk.Account,
 	tokenId []byte, n int) (common.Uint256, error) {
-	return this.bc.Invoke(this.contractAddress, from, "transfer",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, from, "transfer",
 		[]interface{}{from.Address, to.Address, tokenId, n})
 }
 
-func (this *DTokenKit) BuildTransferTokenTx(from, to common.Address,
+func (this *DTokenKit) BuildTransferTokenTx(contractAddress common.Address, from, to common.Address,
 	tokenId []byte, n int) (*types.MutableTransaction, error) {
-	return this.bc.BuildTx(this.contractAddress, "transfer",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "transfer",
 		[]interface{}{from, to, tokenId, n})
 }
 
-func (this *DTokenKit) BuildUseTokenTx(buyer common.Address, tokenId []byte, n int) (*types.MutableTransaction, error) {
-	return this.bc.BuildTx(this.contractAddress, "useToken", []interface{}{buyer, tokenId, n})
+func (this *DTokenKit) BuildUseTokenTx(contractAddress common.Address, buyer common.Address, tokenId []byte, n int) (*types.MutableTransaction, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "useToken", []interface{}{buyer, tokenId, n})
 }
 
-func (this *DTokenKit) UseTokenByAgents(tokenOwner common.Address,
+func (this *DTokenKit) UseTokenByAgents(contractAddress common.Address, tokenOwner common.Address,
 	agent *ontology_go_sdk.Account, tokenId []byte, n int) (common.Uint256, error) {
-	return this.bc.Invoke(this.contractAddress, agent, "useTokenByAgent",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, agent, "useTokenByAgent",
 		[]interface{}{tokenOwner, agent.Address, tokenId, n})
 }
 
-func (this *DTokenKit) SetAgents(account *ontology_go_sdk.Account,
+func (this *DTokenKit) SetAgents(contractAddress common.Address, account *ontology_go_sdk.Account,
 	agents []common.Address, n []int) (common.Uint256, error) {
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
 	if len(agents) != len(n) {
 		return common.UINT256_EMPTY, fmt.Errorf("the length of agents: %d not equal n length: %d", len(agents), len(n))
 	}
-	return this.bc.Invoke(this.contractAddress, account, "setAgents",
+	return this.bc.Invoke(contractAddress, account, "setAgents",
 		[]interface{}{account.Address, parseAddressArr(agents), parseNArr(n)})
 }
 
-func (this *DTokenKit) SetTokenAgents(account *ontology_go_sdk.Account,
+func (this *DTokenKit) SetTokenAgents(contractAddress common.Address, account *ontology_go_sdk.Account,
 	agents []common.Address, tokenId []byte, n []int) (common.Uint256, error) {
 	if len(agents) != len(n) {
 		return common.UINT256_EMPTY, fmt.Errorf("the length of agents: %d not equal n length: %d", len(agents), len(n))
+	}
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
 	}
 	return this.bc.Invoke(this.contractAddress, account, "setTokenAgents",
 		[]interface{}{account.Address, tokenId, parseAddressArr(agents), parseNArr(n)})
 }
 
-func (this *DTokenKit) BuildSetTokenAgentsTx(account common.Address,
+func (this *DTokenKit) BuildSetTokenAgentsTx(contractAddress common.Address, account common.Address,
 	agents []common.Address, tokenId []byte, n []int) (*types.MutableTransaction, error) {
 	if len(agents) != len(n) {
 		return nil, fmt.Errorf("the length of agents: %d not equal n length: %d", len(agents), len(n))
+	}
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
 	}
 	return this.bc.BuildTx(this.contractAddress, "setTokenAgents",
 		[]interface{}{account, tokenId, parseAddressArr(agents), parseNArr(n)})
 }
 
-func (this *DTokenKit) AddAgents(account *ontology_go_sdk.Account,
+func (this *DTokenKit) AddAgents(contractAddress common.Address, account *ontology_go_sdk.Account,
 	agents []common.Address, n []int, tokenIds [][]byte) (common.Uint256, error) {
 	if len(agents) != len(n) {
 		return common.UINT256_EMPTY, fmt.Errorf("the length of agents: %d not equal n length: %d", len(agents), len(n))
@@ -261,7 +354,10 @@ func (this *DTokenKit) AddAgents(account *ontology_go_sdk.Account,
 	for _, item := range tokenIds {
 		tokenIdParam = append(tokenIdParam, item)
 	}
-	return this.bc.Invoke(this.contractAddress, account, "addAgents",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, account, "addAgents",
 		[]interface{}{account.Address, parseAddressArr(agents), parseNArr(n), tokenIdParam})
 }
 
@@ -280,42 +376,57 @@ func parseNArr(ns []int) []interface{} {
 	return agentArr
 }
 
-func (this *DTokenKit) AddTokenAgents(account *ontology_go_sdk.Account,
+func (this *DTokenKit) AddTokenAgents(contractAddress common.Address, account *ontology_go_sdk.Account,
 	agents []common.Address, tokenId []byte, n []int) (common.Uint256, error) {
 	if len(agents) != len(n) {
 		return common.UINT256_EMPTY, fmt.Errorf("the length of agents: %d not equal n length: %d", len(agents), len(n))
 	}
-	return this.bc.Invoke(this.contractAddress, account, "addTokenAgents",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, account, "addTokenAgents",
 		[]interface{}{account.Address, tokenId, parseAddressArr(agents), parseNArr(n)})
 }
 
-func (this *DTokenKit) BuildAddTokenAgentsTx(account common.Address,
+func (this *DTokenKit) BuildAddTokenAgentsTx(contractAddress common.Address, account common.Address,
 	agents []common.Address, tokenId []byte, n []int) (*types.MutableTransaction, error) {
 	if len(agents) != len(n) {
 		return nil, fmt.Errorf("the length of agents: %d not equal n length: %d", len(agents), len(n))
 	}
-	return this.bc.BuildTx(this.contractAddress, "addTokenAgents",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "addTokenAgents",
 		[]interface{}{account, tokenId, parseAddressArr(agents), parseNArr(n)})
 }
 
-func (this *DTokenKit) RemoveAgents(account *ontology_go_sdk.Account,
+func (this *DTokenKit) RemoveAgents(contractAddress common.Address, account *ontology_go_sdk.Account,
 	agents []common.Address, tokenIds [][]byte) (common.Uint256, error) {
 	tokenIdParam := make([]interface{}, 0)
 	for _, item := range tokenIds {
 		tokenIdParam = append(tokenIdParam, item)
 	}
-	return this.bc.Invoke(this.contractAddress, account, "removeAgents",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, account, "removeAgents",
 		[]interface{}{account.Address, parseAddressArr(agents), tokenIdParam})
 }
 
-func (this *DTokenKit) RemoveTokenAgents(tokenId []byte, account *ontology_go_sdk.Account,
+func (this *DTokenKit) RemoveTokenAgents(contractAddress common.Address, tokenId []byte, account *ontology_go_sdk.Account,
 	agents []common.Address) (common.Uint256, error) {
-	return this.bc.Invoke(this.contractAddress, account, "removeTokenAgents",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.Invoke(contractAddress, account, "removeTokenAgents",
 		[]interface{}{account.Address, tokenId, parseAddressArr(agents)})
 }
 
-func (this *DTokenKit) BuildRemoveTokenAgentsTx(tokenId []byte, account common.Address,
+func (this *DTokenKit) BuildRemoveTokenAgentsTx(contractAddress common.Address, tokenId []byte, account common.Address,
 	agents []common.Address) (*types.MutableTransaction, error) {
-	return this.bc.BuildTx(this.contractAddress, "removeTokenAgents",
+	if contractAddress == common.ADDRESS_EMPTY {
+		contractAddress = this.contractAddress
+	}
+	return this.bc.BuildTx(contractAddress, "removeTokenAgents",
 		[]interface{}{account, tokenId, parseAddressArr(agents)})
 }
