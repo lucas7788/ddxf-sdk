@@ -17,6 +17,27 @@ func Init(sdk *ddxf_sdk.DdxfSdk, con *any_contract.ContractKit, admin *ontology_
 	showNotify(sdk, "init", txHash.ToHexString())
 }
 
+func GetMp(con *any_contract.ContractKit) {
+	res, err := con.PreInvoke("getMP", []interface{}{})
+	if err != nil {
+		fmt.Println("err:", err)
+		return
+	}
+	addr,_:=res.ToByteArray()
+	add, _ := common.AddressParseFromBytes(addr)
+	fmt.Println("openkg getMP:", add.ToHexString())
+}
+func GetDToken(con *any_contract.ContractKit) {
+	res, err := con.PreInvoke("getDToken", []interface{}{})
+	if err != nil {
+		fmt.Println("err:", err)
+		return
+	}
+	addr,_:=res.ToByteArray()
+	add, _ := common.AddressParseFromBytes(addr)
+	fmt.Println("openkg getDToken:", add.ToHexString())
+}
+
 func SetDtokenContractAddr(sdk *ddxf_sdk.DdxfSdk, con *any_contract.ContractKit, admin *ontology_go_sdk.Account, dtoken common.Address) {
 	txHash, err := con.Invoke("setDtokenContractAddr", admin, []interface{}{dtoken})
 	if err != nil {

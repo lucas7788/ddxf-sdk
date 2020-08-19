@@ -191,6 +191,7 @@ func (this *ResourceDDO) Serialize(sink *common.ZeroCopySink) {
 	sink.WriteAddress(this.Manager)
 	//TODO
 	sink.WriteHash(this.ItemMetaHash)
+
 	sink.WriteVarUint(uint64(len(this.DTC)))
 	for _, addr := range this.DTC {
 		sink.WriteAddress(addr)

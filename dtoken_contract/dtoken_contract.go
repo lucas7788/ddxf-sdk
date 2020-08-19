@@ -240,7 +240,7 @@ func (this *DTokenKit) SetTokenAgents(account *ontology_go_sdk.Account,
 		return common.UINT256_EMPTY, fmt.Errorf("the length of agents: %d not equal n length: %d", len(agents), len(n))
 	}
 	return this.bc.Invoke(this.contractAddress, account, "setTokenAgents",
-		[]interface{}{account.Address, parseAddressArr(agents), tokenId, parseNArr(n)})
+		[]interface{}{account.Address, tokenId, parseAddressArr(agents), parseNArr(n)})
 }
 
 func (this *DTokenKit) BuildSetTokenAgentsTx(account common.Address,
@@ -249,7 +249,7 @@ func (this *DTokenKit) BuildSetTokenAgentsTx(account common.Address,
 		return nil, fmt.Errorf("the length of agents: %d not equal n length: %d", len(agents), len(n))
 	}
 	return this.bc.BuildTx(this.contractAddress, "setTokenAgents",
-		[]interface{}{account, parseAddressArr(agents), tokenId, parseNArr(n)})
+		[]interface{}{account, tokenId, parseAddressArr(agents), parseNArr(n)})
 }
 
 func (this *DTokenKit) AddAgents(account *ontology_go_sdk.Account,
