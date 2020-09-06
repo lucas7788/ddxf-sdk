@@ -18,6 +18,31 @@ import (
 //wasmFile = "/Users/sss/dev/dockerData/rust_project/ddxf_market/output/accountant.wasm"
 //wasmFile = "/Users/sss/dev/dockerData/rust_project/vote/output/vote.wasm"
 
+func DeployGlobalParamContract(sdk *ddxf_sdk.DdxfSdk, admin *ontology_go_sdk.Account, gasPrice uint64) {
+	wasmFile := "/Users/sss/dev/rust_project/global_param/output/global_param.wasm"
+	code, _ := ioutil.ReadFile(wasmFile)
+
+	contractAddr := common.AddressFromVmCode(code)
+	fmt.Printf("GlobalParam:%s, GlobalParamAddr:%s\n", contractAddr.ToBase58(), contractAddr.ToHexString())
+
+	name := "GlobalParam"
+	desc := "GlobalParam contract"
+	DeployContract(sdk, admin, hex.EncodeToString(code), name, desc, gasPrice)
+}
+
+func DeployZeroPoolContract(sdk *ddxf_sdk.DdxfSdk, admin *ontology_go_sdk.Account, gasPrice uint64) {
+	wasmFile := "/Users/sss/dev/rust_project/zero_pool/output/zero_pool.wasm"
+	code, _ := ioutil.ReadFile(wasmFile)
+
+	contractAddr := common.AddressFromVmCode(code)
+	fmt.Printf("ZeroPool:%s, ZeroPool:%s\n", contractAddr.ToBase58(), contractAddr.ToHexString())
+
+	name := "ZeroPool"
+	desc := "ZeroPool contract"
+	DeployContract(sdk, admin, hex.EncodeToString(code), name, desc, gasPrice)
+}
+
+
 func DeployOep4Contract(sdk *ddxf_sdk.DdxfSdk, admin *ontology_go_sdk.Account, gasPrice uint64) {
 	wasmFile := "/Users/sss/dev/rust_project/oep4-rust/output/oep_4.wasm"
 	code, _ := ioutil.ReadFile(wasmFile)

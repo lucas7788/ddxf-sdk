@@ -16,6 +16,9 @@ import (
 	"math/rand"
 	"strconv"
 	"time"
+	"github.com/ontio/ontology-crypto/signature"
+	"github.com/ontio/ontology-crypto/keypair"
+	"github.com/ontio/ontology/core/types"
 )
 
 var (
@@ -31,6 +34,7 @@ var (
 func main() {
 	testNet := "http://106.75.224.136:20336"
 	testNet = ddxf_sdk.TestNet
+	testNet = "http://172.168.3.151:20336"
 
 	//testNet = "http://172.168.3.47:20336"
 	//testNet = "http://113.31.112.154:20336"
@@ -58,6 +62,43 @@ func main() {
 	agent, _ = wallet.GetAccountByAddress("ANb3bf1b67WP2ZPh5HQt4rkrmphMJmMCMK", pwd)
 	payer, _ = wallet.GetAccountByAddress("AQCQ3Krh6qxeWKKRACNehA8kAATHxoQNWJ", pwd)
 
+	pri,_ := keypair.WIF2Key([]byte("KySMiNrDDzFyUxfpK2hV9wFivq6hEmgB81D1UynhwjXjgd7xUZ88"))
+	pub := pri.Public()
+	add := types.AddressFromPubKey(pub)
+
+	admin = &ontology_go_sdk.Account{
+		PrivateKey:pri,
+		PublicKey:pub,
+		Address:add,
+	}
+
+	if false {
+		utils.DeployGlobalParamContract(sdk,admin,2500)
+		return
+	}
+
+	if false {
+		//340db981f0c3585ac0d273037e0236d962704488
+		utils.DeployZeroPoolContract(sdk,admin,2500)
+		return
+	}
+
+	if true {
+		contractAddr,_ := common.AddressFromHexString("340db981f0c3585ac0d273037e0236d962704488")
+		zeroPool := sdk.DefContract(contractAddr)
+
+
+		global_param,_ := common.AddressFromHexString("a7e169ef9ab7930d573850c1152780d8d7530458")
+		wing,_ := common.AddressFromHexString("6d940806345b271b01efc65201ed65d940ae7db1")
+		txhash, err := zeroPool.Invoke("init", admin, []interface{}{global_param, wing})
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		showNotify(sdk,"init",txhash.ToHexString())
+		return
+	}
+
 	if false {
 		//code, err := sdk.GetOntologySdk().GetSmartContract("c485c5f4671e7acc024e63294a7573bd083b7e6d")
 		//if err != nil {
@@ -80,6 +121,7 @@ func main() {
 		fmt.Println(evt)
 		return
 	}
+
 
 	if false {
 		utils.DeployOep4Contract(sdk, seller, 2500)
@@ -273,7 +315,6 @@ func main() {
 		return
 	}
 	if false {
-
 		//ae28201fd1ae7399a46a821bb6e78664127eb772
 		//b57aae109f66dea7168c6f3443edca542c763167
 		//f506d822135c492d625d81a2c052850b7a07d1ec
@@ -408,6 +449,23 @@ func main() {
 			return
 		}
 		if false {
+			agent, _ := common.AddressFromBase58("ALBoDa6bkA3WPPSTSaGogRuxNYgHPLveee")
+			tokenId, _ := hex.DecodeString("3632")
+			con := sdk.DefContract(dtokenContractAddr)
+			agentBa, err := con.PreInvoke("getAgentBalance", []interface{}{agent, tokenId})
+			fmt.Println(err)
+			bs, err := agentBa.ToByteArray()
+			fmt.Println(err)
+			bbb := common.BigIntFromNeoBytes(bs)
+			fmt.Println("bbb:", bbb.Uint64())
+
+			owner, _ := common.AddressFromBase58("AXP12gzwoem3Rko82SBpYdG5uFpukpveEf")
+			ba, err := sdk.DefDTokenKit().BalanceOf(common.ADDRESS_EMPTY, owner, tokenId)
+			fmt.Println(err, ba)
+			return
+		}
+
+		if false {
 			con := sdk.DefContract(dtokenContractAddr)
 			res, err := con.Invoke("setDdxfContract", seller, []interface{}{mpContractAddr})
 			if err != nil {
@@ -438,7 +496,7 @@ func main() {
 			utils.GenerateDtoken(sdk, seller)
 			return
 		}
-		tokenId, _ := hex.DecodeString("3333")
+		tokenId, _ := hex.DecodeString("3632")
 		if false {
 			utils.BalanceOf(sdk, buyer.Address, tokenId)
 			return
@@ -451,7 +509,10 @@ func main() {
 		}
 
 		if true {
-			if err = useTokenByAgent(sdk, tokenId); err != nil {
+			pri,_ := hex.DecodeString("24cc3b4cf89b669b84e4ca0d6fde48200e8c0e8d72fa9bb342ebc8ab4b2d92a0")
+			agent,_ = ontology_go_sdk.NewAccountFromPrivateKey(pri, signature.SHA256withECDSA)
+			owner, _ := common.AddressFromBase58("AXP12gzwoem3Rko82SBpYdG5uFpukpveEf")
+			if err = useTokenByAgent(sdk, tokenId, owner); err != nil {
 				fmt.Println("useTokenByAgent error: ", err)
 				return
 			}
@@ -471,9 +532,6 @@ func main() {
 				return
 			}
 			return
-		}
-		if true {
-
 		}
 
 		if err = addTokenAgents(sdk, tokenId); err != nil {
@@ -596,9 +654,9 @@ func removeAgents(sdk *ddxf_sdk.DdxfSdk, tokenId []byte) error {
 	return showNotify(sdk, "removeAgents", txHash.ToHexString())
 }
 
-func useTokenByAgent(sdk *ddxf_sdk.DdxfSdk, tokenId []byte) error {
+func useTokenByAgent(sdk *ddxf_sdk.DdxfSdk, tokenId []byte,owner common.Address) error {
 
-	txHash, err := sdk.DefDTokenKit().UseTokenByAgents(common.ADDRESS_EMPTY, seller.Address, agent, tokenId, 1)
+	txHash, err := sdk.DefDTokenKit().UseTokenByAgents(common.ADDRESS_EMPTY, owner, agent, tokenId, 1)
 	if err != nil {
 		return err
 	}
