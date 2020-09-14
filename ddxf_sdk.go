@@ -26,7 +26,7 @@ const (
 
 const (
 	MainNet  = "http://dappnode1.ont.io:20336"
-	TestNet  = "http://polaris2.ont.io:20336"
+	TestNet  = "http://polaris4.ont.io:20336"
 	LocalNet = "http://127.0.0.1:20336"
 )
 

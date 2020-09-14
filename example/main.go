@@ -8,17 +8,20 @@ import (
 	"github.com/ont-bizsuite/ddxf-sdk/example/utils"
 	"github.com/ont-bizsuite/ddxf-sdk/market_place_contract"
 	"github.com/ont-bizsuite/ddxf-sdk/split_policy_contract"
+
+	"github.com/ontio/ontology-crypto/signature"
 	"github.com/ontio/ontology-go-sdk"
 	utils2 "github.com/ontio/ontology-go-sdk/utils"
 	"github.com/ontio/ontology/common"
+	"github.com/ontio/ontology/core/payload"
+	"github.com/ontio/ontology/core/types"
+	"github.com/ontio/ontology/smartcontract/states"
 	"github.com/zhiqiangxu/ddxf"
 	"io/ioutil"
 	"math/rand"
 	"strconv"
 	"time"
-	"github.com/ontio/ontology-crypto/signature"
 	"github.com/ontio/ontology-crypto/keypair"
-	"github.com/ontio/ontology/core/types"
 )
 
 var (
@@ -34,17 +37,25 @@ var (
 func main() {
 	testNet := "http://106.75.224.136:20336"
 	testNet = ddxf_sdk.TestNet
-	testNet = "http://172.168.3.151:20336"
+	//testNet = "http://172.168.3.152:20336"
+	//testNet = "http://127.0.0.1:20336"
 
 	//testNet = "http://172.168.3.47:20336"
 	//testNet = "http://113.31.112.154:20336"
-	//testNet = ddxf_sdk.MainNet
+	testNet = ddxf_sdk.MainNet
 	sdk := ddxf_sdk.NewDdxfSdk(testNet)
 	//106.75.224.136
 
 	if false {
-		bs, _ := hex.DecodeString("7265736f757263655f69645f34643661313335322d386637612d343063392d613934652d626231383337373131323334")
-		fmt.Println(string(bs))
+		code, err := sdk.GetOntologySdk().GetSmartContract("2e532b8ff89c58d340add366437a4572574114ff")
+		fmt.Println(code, err)
+		evt, err := sdk.GetSmartCodeEvent("850a6c35ef54c7dc276feee16e01c8a6e20a17cfb0df436179e868b65ce583d3")
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		data, _ := json.Marshal(evt)
+		fmt.Println(string(data))
 		return
 	}
 
@@ -62,40 +73,291 @@ func main() {
 	agent, _ = wallet.GetAccountByAddress("ANb3bf1b67WP2ZPh5HQt4rkrmphMJmMCMK", pwd)
 	payer, _ = wallet.GetAccountByAddress("AQCQ3Krh6qxeWKKRACNehA8kAATHxoQNWJ", pwd)
 
-	pri,_ := keypair.WIF2Key([]byte("KySMiNrDDzFyUxfpK2hV9wFivq6hEmgB81D1UynhwjXjgd7xUZ88"))
+	if false {
+		jiaoyisuo,_ := common.AddressFromBase58("AbbBBzXZE1EyYgYCusnZCzseyajWXXCsTQ")
+		txhash, err := sdk.GetOntologySdk().Native.Ong.Transfer(2500,20000,seller,seller,jiaoyisuo,50 * 1000000000)
+		fmt.Println(err)
+		fmt.Println(txhash.ToHexString())
+		return
+	}
+	fmt.Println(agent.Address.ToBase58())
+
+	pri, _ := keypair.WIF2Key([]byte("KySMiNrDDzFyUxfpK2hV9wFivq6hEmgB81D1UynhwjXjgd7xUZ88"))
 	pub := pri.Public()
 	add := types.AddressFromPubKey(pub)
 
 	admin = &ontology_go_sdk.Account{
-		PrivateKey:pri,
-		PublicKey:pub,
-		Address:add,
+		PrivateKey: pri,
+		PublicKey:  pub,
+		Address:    add,
 	}
 
+	fmt.Println(admin.Address.ToBase58())
+
 	if false {
-		utils.DeployGlobalParamContract(sdk,admin,2500)
+		utils.DeployGlobalParamContract(sdk, seller, 2500)
 		return
 	}
 
 	if false {
-		//340db981f0c3585ac0d273037e0236d962704488
-		utils.DeployZeroPoolContract(sdk,admin,2500)
+		//e11bcb67d37f1797de02dc890344db2bd4440d4a
+		//acbabd9ab5281808e1bcda70fcac05668ef00bc8
+		//5a85897b8ea91da01bb965383f5cc2525bdaa663
+		//faf99fb13460897b90a970b7921d873e72ae2823
+		utils.DeployZeroPoolContract(sdk, admin, 2500)
 		return
 	}
 
-	if true {
-		contractAddr,_ := common.AddressFromHexString("340db981f0c3585ac0d273037e0236d962704488")
-		zeroPool := sdk.DefContract(contractAddr)
+	//270d19620533881997920364e2cbfc3ee334c8f8
+	//9aa4deaf4ddb215af123f59b17b26b131375e5a4 old
+	zeroContractAddr, _ := common.AddressFromHexString("20e2322eb48f0aeda8f9208280aaa6d15c46d769")
+	global_param, _ := common.AddressFromHexString("a7e169ef9ab7930d573850c1152780d8d7530458")
+
+	//df7249c2699d94ff74cc8743fd265f0576c3f973
+	wingCon, _ := common.AddressFromHexString("ef79ae5d85ec819cfd51eb23d4c242fa70f713e7")
+
+	//222db9efdd987484b246b7318d01a1655e7eceb3
+	//09956946a55f61e4280321f7372c49188a911e96
+	gov_addr, _ := common.AddressFromHexString("38f957755afd12b2149a3490af00a13385f2073e")
 
 
-		global_param,_ := common.AddressFromHexString("a7e169ef9ab7930d573850c1152780d8d7530458")
-		wing,_ := common.AddressFromHexString("6d940806345b271b01efc65201ed65d940ae7db1")
-		txhash, err := zeroPool.Invoke("init", admin, []interface{}{global_param, wing})
+	//zeroPool升级前 wing余额 为145238856226
+	if false {
+		//wing := sdk.DefContract(wingCon)
+		res, err := sdk.GetOntologySdk().NeoVM.PreExecInvokeNeoVMContract(wingCon,[]interface{}{"balanceOf", []interface{}{zeroContractAddr}})
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
-		showNotify(sdk,"init",txhash.ToHexString())
+		bs, _ := res.Result.ToInteger()
+		fmt.Println(bs.Uint64())
+		fmt.Println(sdk.GetOntologySdk().Native.Ont.BalanceOf(gov_addr))
+		return
+	}
+
+	if false {
+		global := sdk.DefContract(global_param)
+		txhash,err := global.Invoke("set_value", admin, []interface{}{[]byte("wing-dao-address"),gov_addr[:], admin.Address})
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		showNotify(sdk, "set_value",txhash.ToHexString())
+		res, err := global.PreInvoke("get_value", []interface{}{[]byte("wing-dao-address")})
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		bs, _ := res.ToByteArray()
+		fmt.Println(hex.EncodeToString(bs))
+		return
+	}
+
+	if true {
+
+		zeroPool := sdk.DefContract(zeroContractAddr)
+
+		if false {
+			wasmFile := "/Users/sss/dev/rust_project/zero_pool/output/zero_pool.wasm"
+			code, _ := ioutil.ReadFile(wasmFile)
+			txhash, err := zeroPool.Invoke("migrate",admin, []interface{}{code, 3,"zeroPool","version","author","email","desc"})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "migrate", txhash.ToHexString())
+			return
+		}
+
+		//sdk.SetGasPrice(0)
+		if false {
+			txhash, err := zeroPool.Invoke("init", seller, []interface{}{global_param, wingCon})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "init", txhash.ToHexString())
+			return
+		}
+		if false {
+			txhash, err := zeroPool.Invoke("set_wing_address", admin, []interface{}{wingCon})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "set_wing_address", txhash.ToHexString())
+			return
+		}
+		if true {
+			//AeFg9DyybfS8dYqUD79g9bAE3DC4h6nQCC   23750000, 154721428
+			addr ,_:=common.AddressFromBase58("AakW1sjaVdX15xYNeMqgpZFuiQCBgQYpBi")
+			method := "get_global_param_addr"
+			method = "balanceOf"
+			method = "get_unbound_wing"
+			res, err := zeroPool.PreInvoke(method, []interface{}{addr})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			bs, _ := res.ToByteArray()
+			source :=common.NewZeroCopySource(bs)
+			data, _ := source.NextI128()
+			fmt.Println(data.ToNumString())
+			return
+		}
+		if false {
+			txhash, err := zeroPool.Invoke("transfer", admin, []interface{}{admin.Address, seller.Address,100})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "transfer", txhash.ToHexString())
+			return
+		}
+		if false {
+			//升级前用户 质押的ont 数量
+			//addr ,_:=common.AddressFromBase58("AeFg9DyybfS8dYqUD79g9bAE3DC4h6nQCC")
+			res, err := zeroPool.PreInvoke("get_staking_balance", []interface{}{seller.Address})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			bs, _ := res.ToByteArray()
+			fmt.Println(hex.EncodeToString(bs))
+			source := common.NewZeroCopySource(bs)
+			i128, _ := source.NextI128()
+			fmt.Println(i128.ToNumString())
+			return
+		}
+
+		if false {
+			txhash, err := zeroPool.Invoke("staking", seller, []interface{}{seller.Address, 1})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "staking", txhash.ToHexString())
+			return
+		}
+		if true {
+			txhash, err := zeroPool.Invoke("unstaking", seller, []interface{}{seller.Address, 3288})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "unstaking", txhash.ToHexString())
+			return
+		}
+		if true {
+			txhash, err := zeroPool.Invoke("withdraw_wing", admin, []interface{}{admin.Address})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "withdraw_wing", txhash.ToHexString())
+			return
+		}
+		return
+	}
+
+	//治理合约初始化
+	if true {
+
+		//global_param, _ := common.AddressFromHexString("a7e169ef9ab7930d573850c1152780d8d7530458")
+		//wingCon, _ := common.AddressFromHexString("6d940806345b271b01efc65201ed65d940ae7db1")
+
+		gov := sdk.DefContract(gov_addr)
+		if false {
+			txhash, err := gov.Invoke("register_pool", admin, []interface{}{zeroContractAddr, 100})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "register_pool", txhash.ToHexString())
+			return
+		}
+		if false {
+			txhash, err := gov.Invoke("unbound_token", admin, []interface{}{})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "unbound_token", txhash.ToHexString())
+			//return
+		}
+		if false {
+			txhash, err := gov.Invoke("unbound_to_pool", admin, []interface{}{})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			showNotify(sdk, "unbound_to_pool", txhash.ToHexString())
+			return
+		}
+
+		if false {
+			ont, _ := common.AddressFromBase58("AFmseVrdL9f9oyCzZefL9tG6UbvhUMqNMV")
+			token := utils.NewToken("ONT", 1, ont)
+			sink := common.NewZeroCopySink(nil)
+			sink.WriteString("set_exchange_rate")
+			token.Serialize(sink)
+			sink.WriteI128(common.I128FromUint64(1))
+
+			contract := &states.WasmContractParam{}
+			contract.Address = gov_addr
+			//bf := bytes.NewBuffer(nil)
+			argbytes := sink.Bytes()
+			contract.Args = argbytes
+
+			invokePayload := &payload.InvokeCode{
+				Code: common.SerializeToBytes(contract),
+			}
+			tx := &types.MutableTransaction{
+				Payer:    admin.Address,
+				GasPrice: 2500,
+				GasLimit: 300000,
+				TxType:   types.InvokeWasm,
+				Nonce:    uint32(time.Now().Unix()),
+				Payload:  invokePayload,
+				Sigs:     nil,
+			}
+			sdk.GetOntologySdk().SignToTransaction(tx, admin)
+
+			txhash, err := sdk.GetOntologySdk().SendTransaction(tx)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			//bs, _ := res.Result.ToByteArray()
+			//source := common.NewZeroCopySource(bs)
+			//d, _ := source.NextI128()
+			//fmt.Println(d.ToNumString())
+			showNotify(sdk, "set_exchange_rate", txhash.ToHexString())
+			return
+		}
+		if true {
+			res, err := gov.PreInvoke("query_unbound_to_pool", []interface{}{zeroContractAddr, 3})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			bs, _ := res.ToByteArray()
+
+			fmt.Println(hex.EncodeToString(bs))
+			return
+		}
+		if true {
+			res, err := gov.PreInvoke("query_unbound_to_pool_count", []interface{}{zeroContractAddr})
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			bs, _ := res.ToByteArray()
+			source := common.NewZeroCopySource(bs)
+			fmt.Println(source.NextI128())
+			fmt.Println(hex.EncodeToString(bs))
+			return
+		}
 		return
 	}
 
@@ -121,7 +383,6 @@ func main() {
 		fmt.Println(evt)
 		return
 	}
-
 
 	if false {
 		utils.DeployOep4Contract(sdk, seller, 2500)
@@ -509,8 +770,8 @@ func main() {
 		}
 
 		if true {
-			pri,_ := hex.DecodeString("24cc3b4cf89b669b84e4ca0d6fde48200e8c0e8d72fa9bb342ebc8ab4b2d92a0")
-			agent,_ = ontology_go_sdk.NewAccountFromPrivateKey(pri, signature.SHA256withECDSA)
+			pri, _ := hex.DecodeString("24cc3b4cf89b669b84e4ca0d6fde48200e8c0e8d72fa9bb342ebc8ab4b2d92a0")
+			agent, _ = ontology_go_sdk.NewAccountFromPrivateKey(pri, signature.SHA256withECDSA)
 			owner, _ := common.AddressFromBase58("AXP12gzwoem3Rko82SBpYdG5uFpukpveEf")
 			if err = useTokenByAgent(sdk, tokenId, owner); err != nil {
 				fmt.Println("useTokenByAgent error: ", err)
@@ -654,7 +915,7 @@ func removeAgents(sdk *ddxf_sdk.DdxfSdk, tokenId []byte) error {
 	return showNotify(sdk, "removeAgents", txHash.ToHexString())
 }
 
-func useTokenByAgent(sdk *ddxf_sdk.DdxfSdk, tokenId []byte,owner common.Address) error {
+func useTokenByAgent(sdk *ddxf_sdk.DdxfSdk, tokenId []byte, owner common.Address) error {
 
 	txHash, err := sdk.DefDTokenKit().UseTokenByAgents(common.ADDRESS_EMPTY, owner, agent, tokenId, 1)
 	if err != nil {

@@ -25,8 +25,19 @@ func DeployGlobalParamContract(sdk *ddxf_sdk.DdxfSdk, admin *ontology_go_sdk.Acc
 	contractAddr := common.AddressFromVmCode(code)
 	fmt.Printf("GlobalParam:%s, GlobalParamAddr:%s\n", contractAddr.ToBase58(), contractAddr.ToHexString())
 
-	name := "GlobalParam"
-	desc := "GlobalParam contract"
+	name := "Wing GlobalParam"
+	desc := "Wing GlobalParam contract"
+	DeployContract(sdk, admin, hex.EncodeToString(code), name, desc, gasPrice)
+}
+
+func DeployWingUtilsContract(sdk *ddxf_sdk.DdxfSdk, admin *ontology_go_sdk.Account, gasPrice uint64) {
+	wasmFile := "/Users/sss/dev/rust_project/wing-utils/output/wing_utils.wasm"
+	code, _ := ioutil.ReadFile(wasmFile)
+
+	contractAddr := common.AddressFromVmCode(code)
+	fmt.Printf("WingUtils:%s, WingUtils:%s\n", contractAddr.ToBase58(), contractAddr.ToHexString())
+	name := "WingUtils contract"
+	desc := "WingUtils contract"
 	DeployContract(sdk, admin, hex.EncodeToString(code), name, desc, gasPrice)
 }
 
@@ -36,9 +47,8 @@ func DeployZeroPoolContract(sdk *ddxf_sdk.DdxfSdk, admin *ontology_go_sdk.Accoun
 
 	contractAddr := common.AddressFromVmCode(code)
 	fmt.Printf("ZeroPool:%s, ZeroPool:%s\n", contractAddr.ToBase58(), contractAddr.ToHexString())
-
-	name := "ZeroPool"
-	desc := "ZeroPool contract"
+	name := "Flash Pool"
+	desc := "Flash Pool Contract"
 	DeployContract(sdk, admin, hex.EncodeToString(code), name, desc, gasPrice)
 }
 
