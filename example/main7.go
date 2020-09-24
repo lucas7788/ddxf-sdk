@@ -8,8 +8,8 @@ import (
 	"github.com/urfave/cli"
 	"os"
 	"runtime"
-	"time"
 	"sync"
+	"time"
 )
 
 var (
@@ -116,6 +116,9 @@ func start(ctx *cli.Context) {
 				continue
 			}
 			oldHeight = curHeight
+			if !ticker.Stop() {
+				<-ticker.C
+			}
 			ticker.Reset(time.Duration(slot) * time.Millisecond)
 		}
 	}()
