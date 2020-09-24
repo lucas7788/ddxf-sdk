@@ -133,6 +133,7 @@ func start(ctx *cli.Context) {
 					ontSdk.NewRpcClient().SetAddress(mainNet[ind])
 				}
 				fmt.Printf("txhash: %s\n", txhash.ToHexString())
+				ticker.Reset(time.Duration(slot) * time.Millisecond)
 			}
 		}
 	}()
