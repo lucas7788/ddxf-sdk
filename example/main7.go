@@ -9,6 +9,7 @@ import (
 	"os"
 	"runtime"
 	"time"
+	"sync"
 )
 
 var (
@@ -30,7 +31,7 @@ var (
 	SlotFlag = cli.UintFlag{
 		Name:  "slot",
 		Usage: "send tx slot `<slot>` (1~) millisecond. default 3000 millisecond",
-		Value: uint(3000),
+		Value: uint(2500),
 	}
 )
 
@@ -97,26 +98,64 @@ func start(ctx *cli.Context) {
 	}
 	slot := ctx.GlobalInt(SlotFlag.Name)
 	index := 0
-	height := getCurBlockHeight(ontSdk, index)
+	oldHeight := getCurBlockHeight(ontSdk, index)
 	var curHeight uint32
-	for {
-		time.Sleep(time.Duration(slot) * time.Millisecond)
-		curHeight = getCurBlockHeight(ontSdk, index)
-		if curHeight != height {
-			height = curHeight
-			continue
+
+	ticker := time.NewTimer(time.Duration(slot) * time.Millisecond)
+
+	wait := new(sync.WaitGroup)
+
+	wait.Add(1)
+	go func() {
+		defer wait.Done()
+		for {
+			time.Sleep(1 * time.Second)
+			curHeight = getCurBlockHeight(ontSdk, index)
+			fmt.Printf("oldHeight:%d, curHeight:%d\n", oldHeight, curHeight)
+			if curHeight == oldHeight {
+				continue
+			}
+			oldHeight = curHeight
+			ticker.Reset(time.Duration(slot) * time.Millisecond)
 		}
-		txhash, err := ontSdk.Native.Ong.Transfer(2500, 20000, acc, acc, acc.Address, 1)
-		if err != nil {
-			fmt.Printf("ong transfer fail: %s\n", err)
-			ind := (index + 1) % len(mainNet)
-			ontSdk.NewRpcClient().SetAddress(mainNet[ind])
-			continue
+	}()
+
+	wait.Add(1)
+	go func() {
+		defer wait.Done()
+		for {
+			select {
+			case <-ticker.C:
+				txhash, err := ontSdk.Native.Ong.Transfer(2500, 20000, acc, acc, acc.Address, 1)
+				if err != nil {
+					fmt.Printf("ong transfer fail: %s\n", err)
+					ind := (index + 1) % len(mainNet)
+					ontSdk.NewRpcClient().SetAddress(mainNet[ind])
+				}
+				fmt.Printf("txhash: %s\n", txhash.ToHexString())
+			}
 		}
-		ontSdk.WaitForGenerateBlock(time.Duration(30)*time.Second, 1)
-		height = curHeight
-		fmt.Printf("curBlockHeight: %d, txhash: %s\n", curHeight, txhash.ToHexString())
-	}
+	}()
+
+	wait.Wait()
+
+	//for {
+	//	time.Sleep(time.Duration(slot) * time.Millisecond)
+	//	curHeight = getCurBlockHeight(ontSdk, index)
+	//	if curHeight != oldHeight {
+	//		oldHeight = curHeight
+	//		continue
+	//	}
+	//	txhash, err := ontSdk.Native.Ong.Transfer(2500, 20000, acc, acc, acc.Address, 1)
+	//	if err != nil {
+	//		fmt.Printf("ong transfer fail: %s\n", err)
+	//		ind := (index + 1) % len(mainNet)
+	//		ontSdk.NewRpcClient().SetAddress(mainNet[ind])
+	//		continue
+	//	}
+	//	oldHeight = curHeight
+	//	fmt.Printf("curBlockHeight: %d, txhash: %s\n", curHeight, txhash.ToHexString())
+	//}
 }
 
 func getCurBlockHeight(ontSdk *ontology_go_sdk.OntologySdk, index int) uint32 {
