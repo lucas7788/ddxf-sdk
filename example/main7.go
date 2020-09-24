@@ -30,7 +30,7 @@ var (
 	}
 	SlotFlag = cli.UintFlag{
 		Name:  "slot",
-		Usage: "send tx slot `<slot>` (1~) millisecond. default 3000 millisecond",
+		Usage: "send tx slot `<slot>` (1~) millisecond. default 2500 millisecond",
 		Value: uint(2500),
 	}
 )
@@ -116,9 +116,6 @@ func start(ctx *cli.Context) {
 				continue
 			}
 			oldHeight = curHeight
-			if !ticker.Stop() {
-				<-ticker.C
-			}
 			ticker.Reset(time.Duration(slot) * time.Millisecond)
 		}
 	}()
