@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/ont-bizsuite/ddxf-sdk"
+	"github.com/ontio/ontology-go-sdk"
 	"github.com/ontio/ontology/common/password"
 	"github.com/urfave/cli"
 	"os"
@@ -58,6 +59,11 @@ func main() {
 	}
 }
 
+var mainNet = []string{
+	"http://dappnode1.ont.io:20336",
+	"http://dappnode2.ont.io:20336",
+	"http://dappnode3.ont.io:20336"}
+
 func start(ctx *cli.Context) {
 	networkId := ctx.GlobalInt(NetworkIdFlag.Name)
 	//默认主网
@@ -90,13 +96,35 @@ func start(ctx *cli.Context) {
 		return
 	}
 	slot := ctx.GlobalInt(SlotFlag.Name)
+	index := 0
+	height := getCurBlockHeight(ontSdk, index)
+	var curHeight uint32
 	for {
-		txhash, err := sdk.GetOntologySdk().Native.Ong.Transfer(2500, 20000, acc, acc, acc.Address, 1)
+		time.Sleep(time.Duration(slot) * time.Millisecond)
+		curHeight = getCurBlockHeight(ontSdk, index)
+		if curHeight != height {
+			height = curHeight
+			continue
+		}
+		txhash, err := ontSdk.Native.Ong.Transfer(2500, 20000, acc, acc, acc.Address, 1)
 		if err != nil {
 			fmt.Printf("ong transfer fail: %s\n", err)
-			return
+			ind := (index + 1) % len(mainNet)
+			ontSdk.NewRpcClient().SetAddress(mainNet[ind])
+			continue
 		}
-		fmt.Printf("txhash: %s\n", txhash.ToHexString())
-		time.Sleep(time.Duration(slot) * time.Millisecond)
+		ontSdk.WaitForGenerateBlock(time.Duration(30)*time.Second, 1)
+		height = curHeight
+		fmt.Printf("curBlockHeight: %d, txhash: %s\n", curHeight, txhash.ToHexString())
 	}
+}
+
+func getCurBlockHeight(ontSdk *ontology_go_sdk.OntologySdk, index int) uint32 {
+	curHeight, err := ontSdk.GetCurrentBlockHeight()
+	if err != nil {
+		ind := (index + 1) % len(mainNet)
+		ontSdk.NewRpcClient().SetAddress(mainNet[ind])
+		return getCurBlockHeight(ontSdk, ind)
+	}
+	return curHeight
 }
